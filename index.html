@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>iTracesAssistant - Rainbow Discreto na Barra</title>
+  <title>iTracesAssistant - Barra Discreta + Alinhamento Correto</title>
   <style>
     /* =============== ESTILO GERAL E BACKGROUND =============== */
     html, body {
@@ -67,15 +67,17 @@
       position: fixed;
       bottom: 100px;
       right: 30px;
-      width: 480px; max-width: 90%;
-      height: 580px; max-height: 80%;
-      background: rgba(255, 255, 255, 0.6);
+      width: 480px; 
+      max-width: 90%;
+      height: 580px; 
+      max-height: 80%;
+      background: rgba(255,255,255,0.6);
       backdrop-filter: blur(28px) saturate(1.5);
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
       z-index: 999;
-      display: none;
+      display: none; /* inicia fechado */
       flex-direction: column;
       overflow: hidden;
       transform-origin: bottom right;
@@ -125,7 +127,9 @@
       padding: 0 20px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      /* Em vez de justify-content: center; vamos alinhar à esquerda */
+      justify-content: flex-start;
+      gap: 10px; /* para separar avatar/título/etc */
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
@@ -135,9 +139,8 @@
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255,255,255,0.4);
       object-fit: cover;
-      margin-right: 10px;
     }
     #avatar[src=""] {
       /* se não tiver avatar, use um placeholder data URI */
@@ -149,13 +152,25 @@
       font-weight: 600;
       color: #333;
       text-shadow: 0 0 1px rgba(255,255,255,0.7);
+      /* Para garantir que não fique colado no avatar */
     }
+
+    /* "Estamos online!" + bolinha verde ao lado */
     #serviceassistant-status {
       position: absolute;
-      bottom: -20px;
-      left: 20px;
-      font-size: 12px;
+      right: 20px; /* movido pro canto direito */
+      bottom: -18px; 
+      font-size: 12px; 
       color: #555;
+      display: flex;
+      align-items: center;
+      gap: 5px; 
+    }
+    #status-dot {
+      width: 8px; 
+      height: 8px; 
+      border-radius: 50%; 
+      background-color: #2ecc71; /* verde */
     }
 
     /* =============== ÁREA DE MENSAGENS =============== */
@@ -360,7 +375,7 @@
       fill: #ff3b30;
     }
 
-    /* ANIMAÇÃO RAINBOW MAIS SUAVE: Usamos cores com alpha e diminuímos a velocidade */
+    /* ANIMAÇÃO RAINBOW MAIS SUAVE: 10s, com alpha */
     @keyframes rainbow {
       0%   { background-position: 0% 50%; }
       50%  { background-position: 100% 50%; }
@@ -370,7 +385,6 @@
       flex: 1; 
       position: relative; 
       border-radius: 50px;
-      /* Ajustamos as cores com transparência e prolongamos a animação p/ 10s */
       background: linear-gradient(
         90deg,
         rgba(255,0,0,0.35),
@@ -535,9 +549,17 @@
   <div id="serviceassistant-window">
     <!-- CABEÇALHO -->
     <div id="serviceassistant-header">
+      <!-- Avatar -->
       <img src="" alt="Avatar do Usuário" id="avatar">
-      <div id="serviceassistant-title"><h2>iTracesAssistant</h2></div>
-      <div id="serviceassistant-status">Estamos online!</div>
+      <!-- Título -->
+      <div id="serviceassistant-title">
+        <h2>iTracesAssistant</h2>
+      </div>
+      <!-- Status "Estamos online!" e bolinha verde -->
+      <div id="serviceassistant-status">
+        <span id="status-dot"></span>
+        Estamos online!
+      </div>
     </div>
 
     <!-- ÁREA DE MENSAGENS -->
@@ -602,7 +624,7 @@
       </div>
     </div>
 
-    <!-- ÁREA DE ENTRADA (Barra c/ Rainbow Discreto) -->
+    <!-- ÁREA DE ENTRADA (Barra c/ Rainbow Suave) -->
     <div id="serviceassistant-input-area">
       <!-- Botão Encerrar -->
       <button id="close-assistance-button" aria-label="Encerrar atendimento">
@@ -679,7 +701,7 @@
     let currentPlaceholderIndex = 0;
     let placeholderInterval;
 
-    // Para seu backend (ajuste se precisar)
+    // Ajuste para seu backend, se precisar
     const BACKEND_URL = "https://proactiva-chat-beta-12a1262c7079.herokuapp.com/api/message";
 
     /* ========== CAPTURAR ELEMENTOS ========== */
@@ -713,8 +735,7 @@
         chatWindow.classList.remove("close");
         chatWindow.classList.add("open");
         chatWindow.style.display = "flex";
-        // muda ícone p/ X
-        toggleIcon.innerHTML = iconClose;
+        toggleIcon.innerHTML = iconClose; // muda ícone p/ "X"
         localStorage.setItem("chatState","open");
       } else {
         chatWindow.classList.remove("open");
@@ -722,8 +743,7 @@
         setTimeout(() => {
           chatWindow.style.display = "none";
         }, 400);
-        // muda ícone p/ chat
-        toggleIcon.innerHTML = iconChat;
+        toggleIcon.innerHTML = iconChat; // muda ícone p/ "chat"
         localStorage.setItem("chatState","closed");
       }
     }
@@ -769,7 +789,7 @@
       typeNextChar();
     }
 
-    /* 
+    /*
       sender: "user" ou "assistant"
       isNew: se é nova msg do assistente => typewriter
     */
@@ -781,12 +801,10 @@
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
       if (sender === "assistant" && isNew) {
-        // Efeito digitação
         typeWriterEffect(msgDiv, text, 25, () => {
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
       } else {
-        // sem typewriter
         msgDiv.textContent = text;
       }
 
@@ -811,7 +829,6 @@
     /* ========== ENVIAR AO BACKEND ========== */
     async function sendMessage(text) {
       if (!text) return;
-      // mensagem do usuário
       appendMessage("user", text, "pt", true, false);
       inputField.value = "";
       inputField.disabled = true;
@@ -828,7 +845,6 @@
 
         const data = await resp.json();
         hideTypingIndicator();
-        // msg assistente => typewriter
         appendMessage("assistant", data.reply || "Sem resposta do backend.", "pt", true, true);
       } catch (err) {
         hideTypingIndicator();
