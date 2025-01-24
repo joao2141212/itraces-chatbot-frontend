@@ -1,858 +1,959 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iTracesAssistant</title>
-    <!-- Importando a Fonte Google e Material Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>iTracesAssistant - Rainbow Discreto na Barra</title>
+  <style>
+    /* =============== ESTILO GERAL E BACKGROUND =============== */
+    html, body {
+      margin: 0; padding: 0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+      background: linear-gradient(180deg, #f2f2f2, #e2e2e2);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(45deg, #fff 0%, #f3f3f3 100%);
+      z-index: -1;
+    }
+    body::after {
+      content: "";
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAU0lEQVQYV2NkwAT/GaWYAgPbOdkZmBjYTY6MRQZgMGFJoANhZTdpCLiG5kSYyAVohQGBQsADHol2bz4Q6ItkEbmOGFYyAjCRnuYYVgAi8m94jBV4hgAwmwC1/xD5CY6kAAAAASUVORK5CYII=') repeat;
+      opacity: 0.03;
+      z-index: -1;
+    }
 
-    <style>
-        /* Estilos Globais */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-image: url('seu-fundo.jpg'); /* Adicione o caminho para sua imagem de fundo */
-            background-size: cover;
-            background-attachment: fixed;
-            margin: 0;
-            padding: 0;
-        }
+    /* =============== BOTÃO FLUTUANTE ÚNICO =============== */
+    #serviceassistant-toggle {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #c7c7c7, #ffffff);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      z-index: 1000;
+    }
+    #serviceassistant-toggle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    #toggleIcon {
+      width: 30px;
+      height: 30px;
+      fill: #007aff;
+      transition: transform 0.4s, opacity 0.4s;
+    }
+    /* Ícone gira levemente no hover */
+    #serviceassistant-toggle:hover #toggleIcon {
+      transform: rotate(-15deg);
+    }
 
-        /* Botão do Chat */
-        #serviceassistant-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #4A90E2, #007AFF);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+    /* =============== JANELA DO CHAT (abre com animação) =============== */
+    #serviceassistant-window {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 480px; max-width: 90%;
+      height: 580px; max-height: 80%;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(28px) saturate(1.5);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      transform-origin: bottom right;
+    }
+    @keyframes openWindow {
+      0% {
+        transform: scale(0.75) rotate(5deg);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.05) rotate(-3deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    @keyframes closeWindow {
+      0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05) rotate(-3deg);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(0.75) rotate(5deg);
+        opacity: 0;
+      }
+    }
+    .open {
+      display: flex;
+      animation: openWindow 0.6s forwards cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    .close {
+      animation: closeWindow 0.4s forwards cubic-bezier(0.19, 1, 0.22, 1);
+    }
 
-        #serviceassistant-button:hover {
-            transform: scale(1.1);
-            background: linear-gradient(135deg, #007AFF, #4A90E2);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
+    /* =============== CABEÇALHO =============== */
+    #serviceassistant-header {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
+      color: #333;
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+    }
+    #avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      object-fit: cover;
+      margin-right: 10px;
+    }
+    #avatar[src=""] {
+      /* se não tiver avatar, use um placeholder data URI */
+      content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABKklEQVRYR+2WwUoCURSG/9s6g2CCKAhx5jBCU/xE1PpD6EjUKSCkAG1KMOrUChTxGUqIJX/QqVjCA8yr3/kWC+mfMT7YJfqZJ5RrfCCPhJaCfsC4yrH3gHtMAHa+iPF6mDiDEpYi4rNR9A1nAAL8D7ywD3BM8AWefAHpTP6CuN79P4uxz6GpPEr443Tq1+ogZw1zQK6nZOYQhI9bR6Rsy+OoQwkwJRl2sV2KFKRR/xccYQ40EhXs/7B0SGZnGCWLEpEGKppj8NDnFh9ZzboyC9PGNQiQNFbo6mEF3vVqvnm0Oug/F+n4aGh6eXyQwLBdNGInS31J1CqApXGUcpZzBAjU7hv2vW1ZPlC/dcPdKcSP/AAXlhfHk1CeIsAAAAAElFTkSuQmCC");
+    }
+    #serviceassistant-title h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      text-shadow: 0 0 1px rgba(255,255,255,0.7);
+    }
+    #serviceassistant-status {
+      position: absolute;
+      bottom: -20px;
+      left: 20px;
+      font-size: 12px;
+      color: #555;
+    }
 
-        /* Janela do Chat */
-        #serviceassistant-window {
-            position: fixed; /* Mantém o chat fixo */
-            bottom: 100px;
-            right: 30px;
-            width: 500px;
-            max-width: 90%;
-            height: 600px;
-            max-height: 80%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.3));
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            border-radius: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            transition: transform 0.4s ease, opacity 0.4s ease;
-        }
+    /* =============== ÁREA DE MENSAGENS =============== */
+    #serviceassistant-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    #serviceassistant-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    #serviceassistant-messages::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+    .serviceassistant-message {
+      margin-bottom: 15px;
+      max-width: 75%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 15px;
+      line-height: 1.4;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.1);
+      background-color: rgba(255,255,255,0.6);
+      backdrop-filter: blur(15px) saturate(1.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      animation: fadeInUp 0.4s forwards;
+      opacity: 0; 
+      color: #333;
+      white-space: pre-wrap;
+    }
+    .serviceassistant-message.user {
+      align-self: flex-end;
+      background: rgba(0,122,255,0.1);
+      border-color: rgba(0,122,255,0.3);
+    }
+    .serviceassistant-message.assistant {
+      align-self: flex-start;
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        /* Textura Granulada Opcional */
-        #serviceassistant-window::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('noise-texture.png'); /* Substitua pelo caminho da textura */
-            opacity: 0.05;
-            pointer-events: none;
-            border-radius: 20px;
-        }
+    /* TYPING INDICATOR (3 círculos pulando) */
+    #serviceassistant-typing-indicator {
+      display: none;
+      align-self: flex-start;
+      margin-bottom: 15px;
+    }
+    .loading-svg {
+      width: 60px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        /* Animações */
-        @keyframes openWindow {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
+    /* =============== PESQUISA DE SATISFAÇÃO =============== */
+    #satisfaction-survey {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%; max-width: 400px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(15px) saturate(1.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+      padding: 20px;
+      z-index: 1001;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      /* fade + scale effect */
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #satisfaction-survey.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    #satisfaction-survey::before {
+      content: "";
+      position: absolute; 
+      top: 0; left: 0; 
+      width: 100%; height: 100%;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAU0lEQVQYV2NkwAT/GaWYAgPbOdkZmBjYTY6MRQZgMGFJoANhZTdpCLiG5kSYyAVohQGBQsADHol2bz4Q6ItkEbmOGFYyAjCRnuYYVgAi8m94jBV4hgAwmwC1/xD5CY6kAAAAASUVORK5CYII=');
+      opacity: 0.03;
+      pointer-events: none;
+      border-radius: 20px;
+    }
+    .survey-container {
+      position: relative; 
+      z-index: 2;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center;
+      animation: fadeScale 0.5s cubic-bezier(0.19,1,0.22,1);
+    }
+    @keyframes fadeScale {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1);   }
+    }
+    .survey-container h3 {
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+    }
+    .emojis {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    .emoji {
+      font-size: 28px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .emoji:hover {
+      transform: scale(1.2);
+    }
+    @keyframes reward {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+    .emoji.reward {
+      animation: reward 0.5s ease;
+    }
+    #thank-you-message {
+      text-align: center;
+      display: none;
+    }
+    #thank-you-message.active {
+      display: block;
+    }
+    #thank-you-message p {
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+    #close-survey {
+      padding: 8px 16px;
+      background-color: rgba(76,175,80,0.7);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    #close-survey:hover {
+      background-color: rgba(69,160,73,0.9);
+    }
 
-        @keyframes closeWindow {
-            from { transform: scale(1); opacity: 1; }
-            to { transform: scale(0.8); opacity: 0; }
-        }
+    /* =============== ÁREA DE ENTRADA (RAINBOW DISCRETO) =============== */
+    #serviceassistant-input-area {
+      padding: 12px; 
+      display: flex; 
+      align-items: center;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(20px) saturate(1.5);
+      border-bottom-left-radius: 20px; 
+      border-bottom-right-radius: 20px;
+      position: relative; 
+      justify-content: flex-start; 
+      gap: 8px;
+    }
+    /* Botão "Encerrar" */
+    #close-assistance-button {
+      background: rgba(255,59,48,0.1);
+      backdrop-filter: blur(15px) saturate(1.5);
+      border: 1px solid rgba(255,59,48,0.2);
+      border-radius: 50%;
+      width: 40px; 
+      height: 40px; 
+      color: #ff3b30; 
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+    #close-assistance-button:hover {
+      transform: scale(1.1);
+      background-color: rgba(255,59,48,0.2);
+    }
+    #close-assistance-button svg {
+      width: 18px; 
+      height: 18px; 
+      fill: #ff3b30;
+    }
 
-        /* Cabeçalho do Chat */
-        #serviceassistant-header {
-            background: linear-gradient(135deg, rgba(0, 87, 231, 0.8), rgba(0, 122, 255, 0.8));
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            color: #ffffff;
-            height: 60px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-        }
+    /* ANIMAÇÃO RAINBOW MAIS SUAVE: Usamos cores com alpha e diminuímos a velocidade */
+    @keyframes rainbow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .rainbow-container {
+      flex: 1; 
+      position: relative; 
+      border-radius: 50px;
+      /* Ajustamos as cores com transparência e prolongamos a animação p/ 10s */
+      background: linear-gradient(
+        90deg,
+        rgba(255,0,0,0.35),
+        rgba(255,127,0,0.35),
+        rgba(255,255,0,0.35),
+        rgba(0,255,0,0.35),
+        rgba(0,0,255,0.35),
+        rgba(139,0,255,0.35),
+        rgba(255,0,0,0.35)
+      );
+      background-size: 300% 300%;
+      animation: rainbow 10s linear infinite;
+      padding: 1px; 
+      display: flex; 
+      align-items: center; 
+      max-width: 100%;
+    }
+    .rainbow-inner {
+      flex: 1; 
+      display: flex; 
+      align-items: center;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 50px; 
+      overflow: hidden; 
+      position: relative;
+    }
+    #serviceassistant-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      padding: 8px 12px;
+      background: transparent;
+      color: #333;
+      border-radius: 50px;
+    }
+    #serviceassistant-input::placeholder {
+      color: transparent;
+    }
+    .placeholder-container {
+      position: absolute; 
+      left: 12px; 
+      top: 50%; 
+      transform: translateY(-50%);
+      pointer-events: none; 
+      color: #999; 
+      font-size: 14px;
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      max-width: 80%;
+      transition: opacity 0.3s;
+    }
+    .placeholder-text { 
+      display: inline-block; 
+    }
 
-        /* Logo / Avatar */
-        #avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #FFFFFF;
-            object-fit: cover;
-        }
+    /* Botão "Enviar" */
+    #serviceassistant-send {
+      background: transparent; 
+      border: none; 
+      border-radius: 50%;
+      width: 32px; 
+      height: 32px; 
+      color: #007aff; 
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    #serviceassistant-send:hover {
+      transform: scale(1.1);
+      background-color: rgba(0,122,255,0.1);
+    }
+    #serviceassistant-send svg {
+      width: 16px; 
+      height: 16px; 
+      fill: #007aff;
+    }
 
-        /* Título do Chat */
-        #serviceassistant-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            margin: 0;
-        }
-        #serviceassistant-title h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 500;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
+    /* Botão "Limpar" */
+    #serviceassistant-clear {
+      background: rgba(255,59,48,0.1);
+      border: none; 
+      border-radius: 50%;
+      width: 40px; 
+      height: 40px; 
+      color: #ff3b30; 
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    #serviceassistant-clear:hover {
+      transform: scale(1.1);
+      background-color: rgba(255,59,48,0.2);
+    }
+    #serviceassistant-clear svg {
+      width: 18px; 
+      height: 18px; 
+      fill: #ff3b30;
+    }
 
-        /* Indicador de Status */
-        #serviceassistant-status {
-            position: absolute;
-            bottom: -20px;
-            left: 20px;
-            font-size: 12px;
-            color: #e0e0e0;
-        }
-
-        /* Botão de Fechar Chat */
-        #serviceassistant-close {
-            width: 28px;
-            height: 28px;
-            background-color: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease-in-out;
-        }
-
-        #serviceassistant-close:hover {
-            transform: scale(1.1);
-        }
-
-        #serviceassistant-close::before, 
-        #serviceassistant-close::after {
-            content: "";
-            position: absolute;
-            width: 12px;
-            height: 2px;
-            background-color: #075e54;
-            border-radius: 1px;
-        }
-
-        #serviceassistant-close::before {
-            transform: rotate(45deg);
-        }
-
-        #serviceassistant-close::after {
-            transform: rotate(-45deg);
-        }
-
-        /* Área de Mensagens */
-        #serviceassistant-messages {
-            flex: 1;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(242, 242, 242, 0.7), rgba(242, 242, 242, 0.3));
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            position: relative;
-        }
-
-        /* Balões de Mensagem */
-        .serviceassistant-message {
-            margin-bottom: 15px;
-            max-width: 80%;
-            word-wrap: break-word;
-            padding: 16px 22px;
-            border-radius: 20px;
-            font-size: 16px;
-            line-height: 1.5;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.5));
-            color: #000000;
-            opacity: 0;
-            animation: fadeInUp 0.5s forwards;
-        }
-
-        .serviceassistant-message.user {
-            align-self: flex-end;
-            background: #D9F2FF;
-            border: 1px solid rgba(0, 122, 255, 0.3);
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .serviceassistant-message.assistant {
-            align-self: flex-start;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Indicador de Digitação */
-        #serviceassistant-typing-indicator {
-            display: none;
-            align-self: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .typing-dots {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-        }
-
-        .typing-dots span {
-            display: block;
-            width: 8px;
-            height: 8px;
-            background-color: #075e54;
-            border-radius: 50%;
-            margin: 0 2px;
-            animation: typing 1s infinite;
-        }
-
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0% { opacity: 0.2; transform: scale(1); }
-            20% { opacity: 1; transform: scale(1.3); }
-            100% { opacity: 0.2; transform: scale(1); }
-        }
-
-        /* Área de Entrada */
-        #serviceassistant-input-area {
-            padding: 20px 30px;
-            display: flex;
-            align-items: center;
-            background: linear-gradient(135deg, rgba(242, 242, 242, 0.7), rgba(242, 242, 242, 0.3));
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            justify-content: space-between;
-            position: relative;
-        }
-
-        #close-assistance-button {
-            background: rgba(255, 59, 48, 0.7);
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 56px;
-            height: 56px;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease, background-color 0.3s ease;
-            margin-right: 10px;
-        }
-
-        #close-assistance-button:hover {
-            transform: scale(1.1);
-            background-color: rgba(230, 57, 70, 0.7);
-        }
-
-        #serviceassistant-input {
-            flex: 1;
-            max-width: 70%;
-            padding: 12px 20px;
-            border: 1px solid rgba(0, 122, 255, 0.5);
-            border-radius: 20px;
-            outline: none;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            color: #000000;
-            box-shadow: 0px 6px 30px rgba(0, 0, 0, 0.2);
-            transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        #serviceassistant-input::placeholder {
-            color: #666;
-        }
-
-        #serviceassistant-input:focus {
-            box-shadow: 0px 8px 40px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-            border-color: rgba(0, 87, 231, 0.7);
-        }
-
-        #serviceassistant-send {
-            background: radial-gradient(circle, rgba(74, 144, 226, 0.8), rgba(0, 122, 255, 0.8));
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            color: white;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease-in-out;
-            margin-left: 10px;
-        }
-
-        #serviceassistant-send:hover {
-            transform: scale(1.1);
-        }
-
-        #serviceassistant-send .material-icons {
-            font-size: 24px;
-            color: white;
-        }
-
-        #serviceassistant-clear {
-            background: transparent;
-            border: none;
-            color: rgba(255, 59, 48, 0.7);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease-in-out;
-            font-size: 16px;
-            margin-left: 10px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #serviceassistant-clear:hover {
-            transform: scale(1.1);
-            color: rgba(255, 107, 107, 0.7);
-        }
-
-        /* Barra de Rolagem Personalizada */
-        #serviceassistant-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-        #serviceassistant-messages::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-
-        /* Responsividade */
-        @media screen and (max-width: 600px) {
-            #serviceassistant-window {
-                width: 90%;
-                height: 80%;
-                bottom: 80px;
-                right: 5%;
-            }
-
-            #serviceassistant-button {
-                width: 50px;
-                height: 50px;
-            }
-
-            #serviceassistant-header {
-                height: 50px;
-                padding: 0 15px;
-            }
-
-            #serviceassistant-title h2 {
-                font-size: 16px;
-            }
-
-            #avatar {
-                width: 35px;
-                height: 35px;
-            }
-
-            #serviceassistant-send {
-                width: 48px;
-                height: 48px;
-            }
-
-            #serviceassistant-input {
-                max-width: 60%;
-            }
-
-            #close-assistance-button {
-                width: 40px;
-                height: 40px;
-                margin-right: 5px;
-            }
-
-            #serviceassistant-clear {
-                width: 40px;
-                height: 40px;
-            }
-        }
-
-        .open {
-            animation: openWindow 0.4s forwards ease-out;
-        }
-        .close {
-            animation: closeWindow 0.4s forwards ease-in;
-        }
-
-        /* Estilos para a Pesquisa de Satisfação */
-        #satisfaction-survey {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 400px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            z-index: 1001;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-            overflow: hidden;
-            background-color: rgba(255, 255, 255, 0.9);
-        }
-        #satisfaction-survey.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        #satisfaction-survey::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('noise-texture.png');
-            opacity: 0.05;
-            pointer-events: none;
-            border-radius: 20px;
-        }
-        .survey-container h3 {
-            margin-bottom: 15px;
-            font-size: 18px;
-            color: #333;
-            text-align: center;
-        }
-        .emojis {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-        .emoji {
-            font-size: 32px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .emoji:hover {
-            transform: scale(1.2);
-        }
-        @keyframes reward {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); }
-            100% { transform: scale(1); }
-        }
-        .emoji.reward {
-            animation: reward 0.5s ease;
-        }
-        #thank-you-message {
-            text-align: center;
-            display: none;
-        }
-        #thank-you-message.active {
-            display: block;
-        }
-        #thank-you-message p {
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #555;
-        }
-        #close-survey {
-            padding: 8px 16px;
-            background-color: rgba(76, 175, 80, 0.7);
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 16px;
-            backdrop-filter: blur(10px) saturate(1.2);
-            -webkit-backdrop-filter: blur(10px) saturate(1.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        #close-survey:hover {
-            background-color: rgba(69, 160, 73, 0.7);
-        }
-    </style>
+    /* =============== RESPONSIVIDADE EXTRA =============== */
+    @media (max-width: 600px) {
+      #serviceassistant-window {
+        width: 90%; 
+        height: 80%; 
+        bottom: 80px; 
+        right: 5%;
+      }
+      #serviceassistant-toggle {
+        width: 50px; 
+        height: 50px;
+      }
+      #serviceassistant-header {
+        height: 50px; 
+        padding: 0 15px;
+      }
+      #serviceassistant-title h2 {
+        font-size: 16px;
+      }
+      #avatar {
+        width: 35px; 
+        height: 35px;
+      }
+      #serviceassistant-send {
+        width: 32px; 
+        height: 32px;
+      }
+      .rainbow-container {
+        max-width: 60%;
+      }
+      #close-assistance-button {
+        width: 32px; 
+        height: 32px; 
+        margin-right: 5px;
+      }
+      #serviceassistant-clear {
+        width: 32px; 
+        height: 32px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Botão do Chat -->
-    <button id="serviceassistant-button" aria-label="Abrir chat">
-        <span class="material-icons">chat</span>
-    </button>
+  <!-- BOTÃO FLUTUANTE -->
+  <button id="serviceassistant-toggle" aria-label="Abrir/Fechar Chat">
+    <svg id="toggleIcon" viewBox="0 0 24 24">
+      <!-- Ícone inicial: "chat" -->
+      <path d="M20 2H4a2 2 0 0 0-2 2v14
+               a2 2 0 0 0 2 2h14l4 4v-20
+               a2 2 0 0 0-2-2z"/>
+    </svg>
+  </button>
 
-    <!-- Janela do Chat -->
-    <div id="serviceassistant-window">
-        <!-- Cabeçalho do Chat -->
-        <div id="serviceassistant-header">
-            <img 
-                src="https://yata-apix-bc19d08a-cf1e-43e7-9f7f-137d5b656b4b.s3-object.locaweb.com.br/cc0fc80f93c84aa69968ee32284ab660.png" 
-                alt="Avatar do Usuário" 
-                id="avatar"
-            >
-            <div id="serviceassistant-title">
-                <h2>iTracesAssistant</h2>
-            </div>
-            <button id="serviceassistant-close" aria-label="Fechar chat"></button>
-            <div id="serviceassistant-status">Estamos online!</div>
-        </div>
-        
-        <!-- Área de Mensagens -->
-        <div id="serviceassistant-messages">
-            <!-- Indicador de Digitação -->
-            <div id="serviceassistant-typing-indicator" class="serviceassistant-message assistant">
-                <div class="typing-dots">
-                    <span></span><span></span><span></span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Pesquisa de Satisfação -->
-        <div id="satisfaction-survey">
-            <div class="survey-container">
-                <h3>Como você avalia nosso atendimento?</h3>
-                <div class="emojis">
-                    <span class="emoji" data-value="1">😡</span>
-                    <span class="emoji" data-value="2">😞</span>
-                    <span class="emoji" data-value="3">😐</span>
-                    <span class="emoji" data-value="4">🙂</span>
-                    <span class="emoji" data-value="5">😃</span>
-                </div>
-                <div id="thank-you-message">
-                    <p>Obrigado pelo seu feedback! 😊</p>
-                    <button id="close-survey">Encerrar</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Área de Entrada -->
-        <div id="serviceassistant-input-area">
-            <button id="close-assistance-button" aria-label="Encerrar atendimento">
-                <span class="material-icons">close</span>
-            </button>
-            <input type="text" id="serviceassistant-input" placeholder="Digite sua mensagem..." aria-label="Digite sua mensagem" />
-            <button id="serviceassistant-send" aria-label="Enviar mensagem">
-                <span class="material-icons">send</span>
-            </button>
-            <button id="serviceassistant-clear" aria-label="Limpar chat">
-                <span class="material-icons">delete</span>
-            </button>
-        </div>
+  <!-- JANELA DO CHAT -->
+  <div id="serviceassistant-window">
+    <!-- CABEÇALHO -->
+    <div id="serviceassistant-header">
+      <img src="" alt="Avatar do Usuário" id="avatar">
+      <div id="serviceassistant-title"><h2>iTracesAssistant</h2></div>
+      <div id="serviceassistant-status">Estamos online!</div>
     </div>
 
-    <script>
-        // =============== CONFIGURAR URL DO BACKEND ===============
-        // Para rodar em PRODUÇÃO (Heroku):
-        const BACKEND_URL = "https://proactiva-chat-beta-12a1262c7079.herokuapp.com/api/message";
-        // Se quiser rodar localmente, troque para:
-        // const BACKEND_URL = "http://localhost:5002/api/message";
-        // E lembre-se de iniciar o backend localmente (node index.js).
+    <!-- ÁREA DE MENSAGENS -->
+    <div id="serviceassistant-messages">
+      <!-- INDICADOR TYPING -->
+      <div id="serviceassistant-typing-indicator" class="serviceassistant-message assistant">
+        <div class="loading-svg">
+          <!-- 3 círculos pulando -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="4" cy="12" r="2">
+              <animate
+                id="spinner_qFRN"
+                begin="0;spinner_OcgL.end+0.25s"
+                attributeName="cy"
+                calcMode="spline"
+                dur="0.6s"
+                values="12;6;12"
+                keySplines=".33,.66,.66,1;.33,0,.66,.33"
+              />
+            </circle>
+            <circle cx="12" cy="12" r="2">
+              <animate
+                begin="spinner_qFRN.begin+0.1s"
+                attributeName="cy"
+                calcMode="spline"
+                dur="0.6s"
+                values="12;6;12"
+                keySplines=".33,.66,.66,1;.33,0,.66,.33"
+              />
+            </circle>
+            <circle cx="20" cy="12" r="2">
+              <animate
+                id="spinner_OcgL"
+                begin="spinner_qFRN.begin+0.2s"
+                attributeName="cy"
+                calcMode="spline"
+                dur="0.6s"
+                values="12;6;12"
+                keySplines=".33,.66,.66,1;.33,0,.66,.33"
+              />
+            </circle>
+          </svg>
+        </div>
+      </div>
+    </div>
 
-        // Função para abrir/fechar o chat com animação
-        function toggleChat(isMinimize = false) {
-            const chatWindow = document.getElementById('serviceassistant-window');
-            const chatButton = document.getElementById('serviceassistant-button');
+    <!-- PESQUISA DE SATISFAÇÃO -->
+    <div id="satisfaction-survey">
+      <div class="survey-container">
+        <h3>Como você avalia nosso atendimento?</h3>
+        <div class="emojis">
+          <span class="emoji" data-value="1">😡</span>
+          <span class="emoji" data-value="2">😞</span>
+          <span class="emoji" data-value="3">😐</span>
+          <span class="emoji" data-value="4">🙂</span>
+          <span class="emoji" data-value="5">😃</span>
+        </div>
+        <div id="thank-you-message">
+          <p>Obrigado pelo seu feedback! 😊</p>
+          <button id="close-survey">Encerrar</button>
+        </div>
+      </div>
+    </div>
 
-            if (isMinimize) {
-                // Minimizar
-                chatWindow.classList.remove('open');
-                chatWindow.classList.add('close');
-                setTimeout(() => {
-                    chatWindow.style.display = 'none';
-                    chatWindow.classList.remove('close');
-                    chatButton.style.display = 'flex';
-                }, 400);
-            } else {
-                // Maximizar
-                chatWindow.style.display = 'flex';
-                chatWindow.classList.remove('close');
-                chatWindow.classList.add('open');
-                chatButton.style.display = 'none';
-            }
+    <!-- ÁREA DE ENTRADA (Barra c/ Rainbow Discreto) -->
+    <div id="serviceassistant-input-area">
+      <!-- Botão Encerrar -->
+      <button id="close-assistance-button" aria-label="Encerrar atendimento">
+        <svg viewBox="0 0 24 24">
+          <path d="M18.3 5.71a1 1 0 0 0-1.42 0
+                   L12 10.59 7.12 5.7
+                   a1 1 0 1 0-1.41 1.42L10.59 12
+                   l-4.88 4.88a1 1 0 1 0 1.42 1.42
+                   L12 13.41l4.88 4.88
+                   a1 1 0 0 0 1.42-1.42
+                   L13.41 12l4.88-4.88
+                   a1 1 0 0 0 0-1.41z"/>
+        </svg>
+      </button>
+
+      <!-- Rainbow Container (DISCRETO) -->
+      <div class="rainbow-container">
+        <div class="rainbow-inner">
+          <span class="placeholder-container">
+            <span class="placeholder-text" id="placeholderText"></span>
+          </span>
+          <input 
+            type="text" 
+            id="serviceassistant-input" 
+            aria-label="Digite sua mensagem"
+          />
+        </div>
+      </div>
+
+      <!-- Botão Enviar -->
+      <button id="serviceassistant-send" aria-label="Enviar mensagem">
+        <svg viewBox="0 0 24 24">
+          <path d="M2.01 21L23 12 2.01 3
+                   2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+
+      <!-- Botão Limpar -->
+      <button id="serviceassistant-clear" aria-label="Limpar chat">
+        <svg viewBox="0 0 24 24">
+          <path d="M15 4V3c0-1.1-.9-2-2-2
+                   h-2c-1.1 0-2 .9-2 2v1H5v2h14
+                   V4h-4zM7 21c0 1.11.89 2 2 2h6
+                   c1.11 0 2-.89 2-2V7H7v14z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* ========== VARIÁVEIS GLOBAIS E PLACEHOLDERS ========== */
+    let chatOpen = false;
+    const iconChat = `
+      <path d="M20 2H4a2 2 0 0 0-2 2v14
+               a2 2 0 0 0 2 2h14l4 4v-20
+               a2 2 0 0 0-2-2z"></path>`;
+    const iconClose = `
+      <path d="M18.3 5.71a1 1 0 0 0-1.42 0
+               L12 10.59 7.12 5.7
+               a1 1 0 1 0-1.41 1.42L10.59 12
+               l-4.88 4.88a1 1 0 1 0 1.42 1.42
+               L12 13.41l4.88 4.88
+               a1 1 0 0 0 1.42-1.42
+               L13.41 12l4.88-4.88
+               a1 1 0 0 0 0-1.41z"></path>`;
+
+    const placeholders = [
+      "Olá, você pode listar todos os técnicos disponíveis?",
+      "Olá, gostaria de criar um incidente",
+      "Como posso acompanhar meu chamado?",
+      "Quais são os horários de atendimento?",
+      "Preciso falar com um suporte avançado"
+    ];
+    let currentPlaceholderIndex = 0;
+    let placeholderInterval;
+
+    // Para seu backend (ajuste se precisar)
+    const BACKEND_URL = "https://proactiva-chat-beta-12a1262c7079.herokuapp.com/api/message";
+
+    /* ========== CAPTURAR ELEMENTOS ========== */
+    const toggleBtn          = document.getElementById("serviceassistant-toggle");
+    const toggleIcon         = document.getElementById("toggleIcon");
+    const chatWindow         = document.getElementById("serviceassistant-window");
+    const inputField         = document.getElementById("serviceassistant-input");
+    const placeholderText    = document.getElementById("placeholderText");
+    const sendBtn            = document.getElementById("serviceassistant-send");
+    const clearBtn           = document.getElementById("serviceassistant-clear");
+    const messagesDiv        = document.getElementById("serviceassistant-messages");
+    const typingIndicator    = document.getElementById("serviceassistant-typing-indicator");
+    const closeAssistanceBtn = document.getElementById("close-assistance-button");
+
+    /* ========== FUNÇÕES PLACEHOLDERS ROTATIVOS ========== */
+    function startPlaceholderRotation() {
+      placeholderText.textContent = placeholders[currentPlaceholderIndex] || "";
+      placeholderInterval = setInterval(() => {
+        currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
+        placeholderText.textContent = placeholders[currentPlaceholderIndex] || "";
+      }, 3000);
+    }
+    function stopPlaceholderRotation() {
+      if (placeholderInterval) clearInterval(placeholderInterval);
+    }
+
+    /* ========== ABRIR/FECHAR CHAT ========== */
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      if (chatOpen) {
+        chatWindow.classList.remove("close");
+        chatWindow.classList.add("open");
+        chatWindow.style.display = "flex";
+        // muda ícone p/ X
+        toggleIcon.innerHTML = iconClose;
+        localStorage.setItem("chatState","open");
+      } else {
+        chatWindow.classList.remove("open");
+        chatWindow.classList.add("close");
+        setTimeout(() => {
+          chatWindow.style.display = "none";
+        }, 400);
+        // muda ícone p/ chat
+        toggleIcon.innerHTML = iconChat;
+        localStorage.setItem("chatState","closed");
+      }
+    }
+    function initializeChatState() {
+      const savedState = localStorage.getItem("chatState");
+      if (savedState === "open") {
+        chatOpen = false; // forçar toggle
+        toggleChat();
+      }
+    }
+
+    /* ========== LOCALSTORAGE: Recuperar/Salvar Mensagens ========== */
+    function getStoredMessages() {
+      const stored = localStorage.getItem("serviceassistant-messages");
+      return stored ? JSON.parse(stored) : [];
+    }
+    function saveMessage(sender, text, language="pt") {
+      const msgs = getStoredMessages();
+      msgs.push({ sender, text, language });
+      localStorage.setItem("serviceassistant-messages", JSON.stringify(msgs));
+    }
+
+    /* ========== CARREGAR MENSAGENS ANTIGAS (sem typewriter) ========== */
+    function loadMessages() {
+      const msgs = getStoredMessages();
+      msgs.forEach(m => {
+        appendMessage(m.sender, m.text, m.language, false, false);
+      });
+    }
+
+    /* ========== EFEITO DE DIGITAÇÃO (TYPEWRITER) ========== */
+    function typeWriterEffect(element, text, speed=25, callback) {
+      let i = 0;
+      function typeNextChar() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(typeNextChar, speed);
+        } else {
+          callback && callback();
         }
+      }
+      typeNextChar();
+    }
 
-        // Inicializar o estado do chat
-        function initializeChatState() {
-            const chatState = localStorage.getItem('chatState');
-            const chatWindow = document.getElementById('serviceassistant-window');
-            const chatButton = document.getElementById('serviceassistant-button');
+    /* 
+      sender: "user" ou "assistant"
+      isNew: se é nova msg do assistente => typewriter
+    */
+    function appendMessage(sender, text, language="pt", save=true, isNew=(sender==="assistant")) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("serviceassistant-message", sender);
 
-            if (chatState === 'open') {
-                chatWindow.style.display = 'flex';
-                chatWindow.classList.add('open');
-                chatButton.style.display = 'none';
-            } else {
-                chatWindow.style.display = 'none';
-                chatButton.style.display = 'flex';
-            }
-        }
+      messagesDiv.insertBefore(msgDiv, typingIndicator);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // Recuperar mensagens do localStorage
-        function getStoredMessages() {
-            const messages = localStorage.getItem('serviceassistant-messages');
-            return messages ? JSON.parse(messages) : [];
-        }
-
-        // Salvar mensagem no localStorage
-        function saveMessage(sender, text, language = 'pt') {
-            const messages = getStoredMessages();
-            messages.push({ sender: sender, text: text, language: language });
-            localStorage.setItem('serviceassistant-messages', JSON.stringify(messages));
-        }
-
-        // Carregar mensagens do localStorage para a tela
-        function loadMessages() {
-            const messages = getStoredMessages();
-            messages.forEach(msg => {
-                appendMessage(msg.sender, msg.text, msg.language, false);
-            });
-        }
-
-        // Adicionar mensagem na tela
-        function appendMessage(sender, text, language = 'pt', save = true) {
-            const messagesContainer = document.getElementById('serviceassistant-messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('serviceassistant-message', sender);
-            messageDiv.textContent = text;
-
-            // Inserir antes do indicador de digitação
-            const typingIndicator = document.getElementById('serviceassistant-typing-indicator');
-            if (typingIndicator) {
-                messagesContainer.insertBefore(messageDiv, typingIndicator);
-            } else {
-                messagesContainer.appendChild(messageDiv);
-            }
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            if (save) {
-                saveMessage(sender, text, language);
-            }
-        }
-
-        // Mostrar/ocultar indicador de digitação
-        function showTypingIndicator() {
-            const typingIndicator = document.getElementById('serviceassistant-typing-indicator');
-            typingIndicator.style.display = 'flex';
-            scrollMessagesToBottom();
-        }
-
-        function hideTypingIndicator() {
-            const typingIndicator = document.getElementById('serviceassistant-typing-indicator');
-            typingIndicator.style.display = 'none';
-            scrollMessagesToBottom();
-        }
-
-        // Rolagem até o final
-        function scrollMessagesToBottom() {
-            const messagesContainer = document.getElementById('serviceassistant-messages');
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // Envio de mensagem ao backend
-        async function sendMessage(text) {
-            const inputField = document.getElementById('serviceassistant-input');
-            if (!text) return;
-
-            // Mostra a mensagem do usuário no chat
-            appendMessage('user', text, 'pt', true);
-
-            // Limpa e desabilita o input momentaneamente
-            inputField.value = '';
-            inputField.disabled = true;
-
-            // Mostra indicador de digitação
-            showTypingIndicator();
-
-            try {
-                // Pega todas as mensagens para mandar como histórico
-                const messages = getStoredMessages();
-
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: messages }),
-                });
-
-                if (!response.ok) {
-                    console.error(`Erro: ${response.status} ${response.statusText}`);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                // Esconde o indicador de digitação
-                hideTypingIndicator();
-
-                // Mostra a resposta do assistente
-                appendMessage('assistant', data.reply || 'Sem resposta do backend.', 'pt');
-
-            } catch (error) {
-                hideTypingIndicator();
-                appendMessage('assistant', 'Ocorreu um erro. Tente novamente mais tarde.');
-                console.error('Erro ao enviar mensagem:', error);
-            } finally {
-                inputField.disabled = false;
-                inputField.focus();
-            }
-        }
-
-        // Limpar chat
-        function clearChat() {
-            localStorage.removeItem('serviceassistant-messages');
-            const messagesContainer = document.getElementById('serviceassistant-messages');
-            messagesContainer.innerHTML = `
-                <div id="serviceassistant-typing-indicator" class="serviceassistant-message assistant">
-                    <div class="typing-dots">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
-            `;
-            scrollMessagesToBottom();
-        }
-
-        // Exibir pesquisa de satisfação
-        function showSatisfactionSurvey() {
-            document.getElementById('satisfaction-survey').classList.add('active');
-        }
-
-        // Ocultar pesquisa
-        function hideSatisfactionSurvey() {
-            const survey = document.getElementById('satisfaction-survey');
-            survey.classList.remove('active');
-            document.querySelector('.emojis').style.display = 'flex';
-            document.getElementById('thank-you-message').classList.remove('active');
-        }
-
-        // Finalizar atendimento
-        function finalizeChat() {
-            showSatisfactionSurvey();
-        }
-
-        // Eventos quando a página carrega
-        window.addEventListener('load', () => {
-            initializeChatState();
-            loadMessages();
+      if (sender === "assistant" && isNew) {
+        // Efeito digitação
+        typeWriterEffect(msgDiv, text, 25, () => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
+      } else {
+        // sem typewriter
+        msgDiv.textContent = text;
+      }
 
-        // Eventos para os botões
-        document.getElementById('serviceassistant-button').addEventListener('click', () => {
-            toggleChat(false);
-            localStorage.setItem('chatState', 'open');
-        });
-        document.getElementById('serviceassistant-close').addEventListener('click', () => {
-            toggleChat(true);
-            localStorage.setItem('chatState', 'closed');
-        });
-        document.getElementById('serviceassistant-send').addEventListener('click', () => {
-            const inputField = document.getElementById('serviceassistant-input');
-            const message = inputField.value.trim();
-            sendMessage(message);
-        });
-        document.getElementById('serviceassistant-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const message = e.target.value.trim();
-                sendMessage(message);
-            }
-        });
-        document.getElementById('serviceassistant-clear').addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja limpar todas as mensagens?')) {
-                clearChat();
-            }
-        });
-        document.getElementById('close-assistance-button').addEventListener('click', () => {
-            finalizeChat();
-        });
+      if (save) {
+        saveMessage(sender, text, language);
+      }
+    }
 
-        // Emojis de avaliação
-        document.querySelectorAll('.emoji').forEach(emoji => {
-            emoji.addEventListener('click', () => {
-                const value = emoji.getAttribute('data-value');
-                if (value >= 4) {
-                    emoji.classList.add('reward');
-                    setTimeout(() => {
-                        emoji.classList.remove('reward');
-                    }, 500);
-                }
-                document.getElementById('thank-you-message').classList.add('active');
-                document.querySelector('.emojis').style.display = 'none';
-            });
+    /* ========== INDICADOR DE DIGITAÇÃO ========== */
+    function showTypingIndicator() {
+      typingIndicator.style.display = "flex";
+      scrollMessagesToBottom();
+    }
+    function hideTypingIndicator() {
+      typingIndicator.style.display = "none";
+      scrollMessagesToBottom();
+    }
+    function scrollMessagesToBottom() {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    /* ========== ENVIAR AO BACKEND ========== */
+    async function sendMessage(text) {
+      if (!text) return;
+      // mensagem do usuário
+      appendMessage("user", text, "pt", true, false);
+      inputField.value = "";
+      inputField.disabled = true;
+      showTypingIndicator();
+
+      try {
+        const msgs = getStoredMessages();
+        const resp = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: msgs }),
         });
-        document.getElementById('close-survey').addEventListener('click', () => {
-            hideSatisfactionSurvey();
-        });
-    </script>
+        if (!resp.ok) throw new Error(`Erro HTTP: ${resp.status}`);
+
+        const data = await resp.json();
+        hideTypingIndicator();
+        // msg assistente => typewriter
+        appendMessage("assistant", data.reply || "Sem resposta do backend.", "pt", true, true);
+      } catch (err) {
+        hideTypingIndicator();
+        appendMessage("assistant", "Ocorreu um erro. Tente novamente mais tarde.", "pt", true, false);
+        console.error(err);
+      } finally {
+        inputField.disabled = false;
+        inputField.focus();
+      }
+    }
+
+    /* ========== LIMPAR CHAT ========== */
+    function clearChat() {
+      localStorage.removeItem("serviceassistant-messages");
+      messagesDiv.innerHTML = `
+        <div id="serviceassistant-typing-indicator" class="serviceassistant-message assistant">
+          <div class="loading-svg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="4" cy="12" r="2">
+                <animate
+                  id="spinner_qFRN"
+                  begin="0;spinner_OcgL.end+0.25s"
+                  attributeName="cy"
+                  calcMode="spline"
+                  dur="0.6s"
+                  values="12;6;12"
+                  keySplines=".33,.66,.66,1;.33,0,.66,.33"
+                />
+              </circle>
+              <circle cx="12" cy="12" r="2">
+                <animate
+                  begin="spinner_qFRN.begin+0.1s"
+                  attributeName="cy"
+                  calcMode="spline"
+                  dur="0.6s"
+                  values="12;6;12"
+                  keySplines=".33,.66,.66,1;.33,0,.66,.33"
+                />
+              </circle>
+              <circle cx="20" cy="12" r="2">
+                <animate
+                  id="spinner_OcgL"
+                  begin="spinner_qFRN.begin+0.2s"
+                  attributeName="cy"
+                  calcMode="spline"
+                  dur="0.6s"
+                  values="12;6;12"
+                  keySplines=".33,.66,.66,1;.33,0,.66,.33"
+                />
+              </circle>
+            </svg>
+          </div>
+        </div>
+      `;
+      scrollMessagesToBottom();
+    }
+
+    /* ========== PESQUISA SATISFAÇÃO (c/ ANIMAÇÃO BLUR) ========== */
+    function showSatisfactionSurvey() {
+      document.getElementById("satisfaction-survey").classList.add("active");
+    }
+    function hideSatisfactionSurvey() {
+      const survey = document.getElementById("satisfaction-survey");
+      survey.classList.remove("active");
+      document.querySelector(".emojis").style.display = "flex";
+      document.getElementById("thank-you-message").classList.remove("active");
+    }
+    function finalizeChat() {
+      showSatisfactionSurvey();
+    }
+
+    /* ========== EVENTOS ========== */
+    window.addEventListener("load", () => {
+      initializeChatState();
+      loadMessages();
+      startPlaceholderRotation();
+    });
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        startPlaceholderRotation();
+      } else {
+        stopPlaceholderRotation();
+      }
+    });
+    toggleBtn.addEventListener("click", toggleChat);
+    sendBtn.addEventListener("click", () => {
+      const txt = inputField.value.trim();
+      sendMessage(txt);
+    });
+    inputField.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        const txt = e.target.value.trim();
+        sendMessage(txt);
+      }
+    });
+    clearBtn.addEventListener("click", () => {
+      if (confirm("Tem certeza que deseja limpar todas as mensagens?")) {
+        clearChat();
+      }
+    });
+    closeAssistanceBtn.addEventListener("click", () => {
+      finalizeChat();
+    });
+
+    // Emojis
+    document.querySelectorAll(".emoji").forEach(emoji => {
+      emoji.addEventListener("click", () => {
+        const val = emoji.getAttribute("data-value");
+        if (val >= 4) {
+          emoji.classList.add("reward");
+          setTimeout(() => {
+            emoji.classList.remove("reward");
+          }, 500);
+        }
+        document.getElementById("thank-you-message").classList.add("active");
+        document.querySelector(".emojis").style.display = "none";
+      });
+    });
+    document.getElementById("close-survey").addEventListener("click", () => {
+      hideSatisfactionSurvey();
+    });
+
+    // Parar placeholders se focar no input
+    inputField.addEventListener("focus", stopPlaceholderRotation);
+    inputField.addEventListener("blur", startPlaceholderRotation);
+  </script>
 </body>
 </html>
